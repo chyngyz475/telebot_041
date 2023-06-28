@@ -86,9 +86,9 @@ async def menu_handler(message: types.Message):
 async def process_back_callback(query: types.CallbackQuery, state: FSMContext):
     keyboard = types.InlineKeyboardMarkup(row_width=2)
     buttons = [
-        types.InlineKeyboardButton("Розничная торговля", callback_data='checkout_retail'),
-        types.InlineKeyboardButton("Оптовая торговля", callback_data='checkout_wholesale'),
-        types.InlineKeyboardButton("Назад", callback_data='back')
+        types.InlineKeyboardButton("🛍️ Розничная торговля", callback_data='checkout_retail'),
+        types.InlineKeyboardButton("📦 Оптовая торговля", callback_data='checkout_wholesale'),
+        types.InlineKeyboardButton("⬅️ Назад", callback_data='back'),
     ]
     keyboard.add(*buttons)
     await query.message.edit_text('Main Menu', reply_markup=get_menu_keyboard())
@@ -100,9 +100,9 @@ async def process_back_callback(query: types.CallbackQuery, state: FSMContext):
 async def handle_checkout(query: types.CallbackQuery):
     keyboard = types.InlineKeyboardMarkup(row_width=2)
     buttons = [
-        types.InlineKeyboardButton("Розничная торговля", callback_data='checkout_retail'),
-        types.InlineKeyboardButton("Оптовая торговля", callback_data='checkout_wholesale'),
-        types.InlineKeyboardButton("Назад", callback_data='back')
+        types.InlineKeyboardButton("🛍️ Розничная торговля", callback_data='checkout_retail'),
+        types.InlineKeyboardButton("📦 Оптовая торговля", callback_data='checkout_wholesale'),
+        types.InlineKeyboardButton("⬅️ Назад", callback_data='back'),
     ]
     keyboard.add(*buttons)
 
@@ -158,9 +158,13 @@ async def process_size(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=CheckoutRetailState.amount)
 async def process_amount(message: types.Message, state: FSMContext):
-    amount = message.text.strip()
+    amount_in_yuan = message.text.strip()
 
-    await state.update_data(amount=amount)
+    
+    exchange_rate = 9.6  # Example exchange rate, replace with the actual exchange rate
+    amount_in_rubles = float(amount_in_yuan) * exchange_rate
+
+    await state.update_data(amount=amount_in_yuan)
     await CheckoutRetailState.next()
 
     data = await state.get_data()
@@ -168,38 +172,42 @@ async def process_amount(message: types.Message, state: FSMContext):
     sku = data['sku']
     color = data['color']
     size = data['size']
-    amount = data['amount']
+    amount_in_yuan = data['amount']
+    amount_in_rubles = amount_in_rubles
 
-    item_id = generate_item_id()  # Функция для генерации уникального идентификатора товара
+    item_id = generate_item_id()  # Function to generate a unique item ID
 
-    message_text = f"Подтверждение заказа:\n\n"
-    message_text += f"Full Name: {name}\n"
-    message_text += f"Product ID: {item_id}\n" 
-    message_text += f"Product SKU: {sku}\n"
-    message_text += f"Color: {color}\n"
-    message_text += f"Size: {size}\n"
-    message_text += f"Amount: {amount}\n\n"
-    message_text += f"Оплата производится переводом на карту.\n"
-    message_text += f"✅Рабочие карта✅\n"
-    message_text += f"Тинькофф Номер карты Получатель\n"
-    message_text += f"2211220088889991\n"
-    message_text += f"Иванов Иван Иванович\n"
-    message_text += "После оплаты присылайте чек/фото перевода.\n"
-    message_text += f"Отправьте скриншот оплаты.\n"
+    message_text = "📦 Подтверждение заказа:\n\n"
+    message_text += f"👤 Full Name: {name}\n"
+    message_text += f"🆔 Product ID: {item_id}\n"
+    message_text += f"🏷️ Product SKU: {sku}\n"
+    message_text += f"🎨 Color: {color}\n"
+    message_text += f"📏 Size: {size}\n"
+    message_text += f"💰 Amount in Yuan: {amount_in_yuan} CNY\n"
+    message_text += f"💵 Amount in Rubles: {amount_in_rubles:.2f} RUB\n\n"
+    message_text += "💳 Оплата производится переводом на карту.\n\n"
+    message_text += "✅ Рабочие карта ✅\n"
+    message_text += "🏦 Тинькофф Номер карты Получатель\n"
+    message_text += "2211220088889991\n"
+    message_text += "👤 Иванов Иван Иванович\n\n"
+    message_text += "📷 После оплаты присылайте чек/фото перевода.\n"
+    message_text += "✉️ Отправьте скриншот оплаты.\n"
+
 
     await message.reply(message_text)
     await CheckoutRetailState.photo.set()
+
 
     # Save the data in the PostgreSQL database
     cursor = conn.cursor()
     cursor.execute(
         "INSERT INTO telegram_application (name, sku, color, size, amount, status_id) VALUES (%s, %s, %s, %s, %s, %s)",
-        (name, sku, color, size, amount, status_id)
+        (name, sku, color, size, amount_in_yuan, amount_in_rubles, status_id)
     )
     conn.commit()
 
     # Save the data in the Excel file
-    row = [name, sku, color, size, amount]
+    row = [name, sku, color, size, amount_in_yuan, amount_in_rubles,]
     sheet.append(row)
     workbook.save('orders.xlsx')
 
@@ -361,9 +369,9 @@ async def process_price(message: types.Message, state: FSMContext):
 
     keyboard = types.InlineKeyboardMarkup(row_width=2)
     buttons = [
-        types.InlineKeyboardButton("Розничная торговля", callback_data='checkout_retail'),
-        types.InlineKeyboardButton("Оптовая торговля", callback_data='checkout_wholesale'),
-        types.InlineKeyboardButton("Назад", callback_data='back')
+        types.InlineKeyboardButton("🛍️ Розничная торговля", callback_data='checkout_retail'),
+        types.InlineKeyboardButton("📦 Оптовая торговля", callback_data='checkout_wholesale'),
+        types.InlineKeyboardButton("⬅️ Назад", callback_data='back'),
     ]
     keyboard.add(*buttons)
     await state.finish()
@@ -385,9 +393,9 @@ async def handle_contact_manager(query: types.CallbackQuery):
     keyboard.add(button)
     keyboard = types.InlineKeyboardMarkup(row_width=2)
     buttons = [
-        types.InlineKeyboardButton("Розничная торговля", callback_data='checkout_retail'),
-        types.InlineKeyboardButton("Оптовая торговля", callback_data='checkout_wholesale'),
-        types.InlineKeyboardButton("Назад", callback_data='back')
+        types.InlineKeyboardButton("🛍️ Розничная торговля", callback_data='checkout_retail'),
+        types.InlineKeyboardButton("📦 Оптовая торговля", callback_data='checkout_wholesale'),
+        types.InlineKeyboardButton("⬅️ Назад", callback_data='back'),
     ]
     keyboard.add(*buttons)
 
@@ -411,9 +419,9 @@ async def handle_delivery(query: types.CallbackQuery):
 
     keyboard = types.InlineKeyboardMarkup(row_width=2)
     buttons = [
-        types.InlineKeyboardButton("Розничная торговля", callback_data='checkout_retail'),
-        types.InlineKeyboardButton("Оптовая торговля", callback_data='checkout_wholesale'),
-        types.InlineKeyboardButton("Назад", callback_data='back')
+        types.InlineKeyboardButton("🛍️ Розничная торговля", callback_data='checkout_retail'),
+        types.InlineKeyboardButton("📦 Оптовая торговля", callback_data='checkout_wholesale'),
+        types.InlineKeyboardButton("⬅️ Назад", callback_data='back'),
     ]
     keyboard.add(*buttons)
 
@@ -437,53 +445,23 @@ async def handle_status(query: types.CallbackQuery):
 async def process_product_id(message: types.Message, state: FSMContext):
     product_id = message.text
 
-    # Check if the product exists in the database
-    if product_exists(product_id):
-        # Product exists, get its status
-        product_status = get_product_status(product_id)
 
-        message_text = f"Статус товара ID: {product_id}\n"
-        message_text += f"Статус: {product_status}\n"
+    message_text = f"Статус товара ID: {product_id}\n"
+
         # Add other details as needed
 
-        keyboard = types.InlineKeyboardMarkup(row_width=1)
-        buttons = [
-            types.InlineKeyboardButton("Розничная торговля", callback_data='checkout_retail'),
-            types.InlineKeyboardButton("Оптовая торговля", callback_data='checkout_wholesale'),
-            types.InlineKeyboardButton("Ответы на популярные вопросы", callback_data='answers'),
+    keyboard = types.InlineKeyboardMarkup(row_width=1)
+    buttons = [
+            types.InlineKeyboardButton("🛍️ Розничная торговля", callback_data='checkout_retail'),
+            types.InlineKeyboardButton("📦 Оптовая торговля", callback_data='checkout_wholesale'),
+            types.InlineKeyboardButton("❓ Ответы на популярные вопросы", callback_data='answers'),
             types.InlineKeyboardButton("Калькулятор", callback_data='calculator'),
-            types.InlineKeyboardButton("Назад", callback_data='back'),
+            types.InlineKeyboardButton("⬅️ Назад", callback_data='back'),
         ]
-        keyboard.add(*buttons)
+    keyboard.add(*buttons)
 
-        await message.reply(message_text, reply_markup=keyboard)
-    else:
-        # Product does not exist, prompt the user to order the product
-        message_text = "Товар отсутствует. Пожалуйста, оформите заказ."
-        await message.reply(message_text)
+    await message.reply(message_text, reply_markup=keyboard)
 
-
-
-def product_exists(product_id):
-    # Implement your logic to check if the product exists in the database
-    # You can query the `telegram_application` table and check if the product_id exists
-    # Return True if the product exists, or False otherwise
-    return False
-
-
-def get_product_status(product_id):
-    # Implement your logic to retrieve the status of the product from the database
-    # You can query the `telegram_application` table and fetch the status based on the product_id
-    # Return the status as a string
-    return "Product not found"
-
-
-async def handle_checkout(message: types.Message, state: FSMContext):
-    # Implement the logic to handle the order checkout process
-    # This may involve creating an order, collecting payment details, etc.
-    # You can use the `state` to track the necessary data during the order checkout process
-    # After completing the order checkout, you can return the user to the previous menu or perform any other desired action.
-    pass
 
 # Статус заказа
 
@@ -498,14 +476,15 @@ async def handle_course(query: types.CallbackQuery):
     message_text += f"Текущий курс на сегодняшний день 12.4\n"
 
     
-    keyboard = types.InlineKeyboardMarkup(row_width=2)
+    keyboard = types.InlineKeyboardMarkup(row_width=1)
     buttons = [
-        types.InlineKeyboardButton("Розничная торговля", callback_data='checkout_retail'),
-        types.InlineKeyboardButton("Оптовая торговля", callback_data='checkout_wholesale'),
-        types.InlineKeyboardButton("Ответы на популярные вопросы", callback_data='answers'),
-        types.InlineKeyboardButton("Назад", callback_data='back'),
+        types.InlineKeyboardButton("🛍️ Розничная торговля", callback_data='checkout_retail'),
+        types.InlineKeyboardButton("📦 Оптовая торговля", callback_data='checkout_wholesale'),
+        types.InlineKeyboardButton("❓ Ответы на популярные вопросы", callback_data='answers'),
+        types.InlineKeyboardButton("⬅️ Назад", callback_data='back'),
     ]
     keyboard.add(*buttons)
+
     await query.message.reply(message_text, reply_markup=keyboard)
 
 # Курс валют
@@ -521,8 +500,9 @@ async def handle_answers(query: types.CallbackQuery):
     
 
     message_text = "Ответы на популярные вопросы:\n\n"
-    message_text = "Если у вас появиться вопросы заходите по ссылке \n\n"
-    message_text = "Переходи по ссылке\n\n"
+    message_text += "📚 Если у вас появятся вопросы, вы можете найти ответы в нашем разделе справки.\n\n"
+    message_text += "🔗 Перейдите по ссылке для получения дополнительной информации.\n\n"
+
 
     keyboard = types.InlineKeyboardMarkup(row_width=2)
     buttons = [
