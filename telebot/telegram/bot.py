@@ -13,6 +13,8 @@ import psycopg2
 import uuid
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
+
+
 def generate_item_id():
     # Generate a unique item ID using UUID (Universally Unique Identifier)
     item_id = str(uuid.uuid4())
@@ -434,34 +436,26 @@ async def handle_delivery(query: types.CallbackQuery):
 
 
 # Статус заказа
-@dp.callback_query_handler(lambda query: query.data == 'status')
-async def handle_status(query: types.CallbackQuery):
-    message_text = "Введите ID товара:"
-    await query.message.reply(message_text)
-    await StatusForm.ID_PRODUCT.set()
-
-
 @dp.message_handler(state=StatusForm.ID_PRODUCT)
 async def process_product_id(message: types.Message, state: FSMContext):
     product_id = message.text
 
+    try:
+        order = Application.objects.get(product_id=product_id)
+        expected_status = order.status  # Assuming `status` field is a CharField or similar
+        status_mapping = {
+            'pending': 'В ожидании',
+            'processing': 'В обработке',
+            'shipped': 'Отправлен',
+            'delivered': 'Доставлен',
+        }
+        expected_status_text = status_mapping.get(expected_status, 'Неизвестный статус')
 
-    message_text = f"Статус товара ID: {product_id}\n"
+        message_text = f"Статус товара ID: {product_id}\nОжидаемый статус заказа: {expected_status_text}"
+    except Application.DoesNotExist:
+        message_text = f"Заказ с ID {product_id} не найден"
 
-        # Add other details as needed
-
-    keyboard = types.InlineKeyboardMarkup(row_width=1)
-    buttons = [
-            types.InlineKeyboardButton("🛍️ Розничная торговля", callback_data='checkout_retail'),
-            types.InlineKeyboardButton("📦 Оптовая торговля", callback_data='checkout_wholesale'),
-            types.InlineKeyboardButton("❓ Ответы на популярные вопросы", callback_data='answers'),
-            types.InlineKeyboardButton("Калькулятор", callback_data='calculator'),
-            types.InlineKeyboardButton("⬅️ Назад", callback_data='back'),
-        ]
-    keyboard.add(*buttons)
-
-    await message.reply(message_text, reply_markup=keyboard)
-
+    await message.reply(message_text)
 
 # Статус заказа
 
