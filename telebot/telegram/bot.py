@@ -326,6 +326,8 @@ async def process_amount(message: types.Message, state: FSMContext):
 async def process_photo(message: types.Message, state: FSMContext):
     photo_id = message.photo[-1].file_id
 
+    
+
     data = await state.get_data()
     namewh = data['name']
     skuwh = data['sku']
