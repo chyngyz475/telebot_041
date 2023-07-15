@@ -12,7 +12,7 @@ from openpyxl import Workbook
 import psycopg2
 import uuid
 from aiogram.dispatcher.filters.state import State, StatesGroup
-
+from datetime import datetime
 
 
 def generate_item_id():
@@ -177,6 +177,8 @@ async def process_amount(message: types.Message, state: FSMContext):
     amount_in_yuan = data['amount']
     amount_in_rubles = amount_in_rubles
 
+    creation_date = datetime.now()
+
     item_id = generate_item_id()  # Function to generate a unique item ID
 
     message_text = "📦 Подтверждение заказа:\n\n"
@@ -203,8 +205,8 @@ async def process_amount(message: types.Message, state: FSMContext):
     # Save the data in the PostgreSQL database
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO telegram_application (name, sku, color, size, amount, status_id) VALUES (%s, %s, %s, %s, %s, %s)",
-        (name, sku, color, size, amount_in_yuan, amount_in_rubles, status_id)
+        "INSERT INTO telegram_application (name, sku, color, size, amount, status_id, creation_date ) VALUES (%s, %s, %s, %s, %s, %s)",
+        (name, sku, color, size, amount_in_yuan, amount_in_rubles, status_id, creation_date)
     )
     conn.commit()
 
@@ -225,7 +227,9 @@ async def process_photo(message: types.Message, state: FSMContext):
     size = data['size']
     amount = data['amount']
 
-    await message.reply("Заказ успешно размещен. Спасибо, мы скоро свяжемся с вами!")
+    await message.reply("Заказ успешно размещен. Спасибо, мы скоро свяжемся с вами!", reply_markup=types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True).add(
+    types.KeyboardButton("Меню")
+))
 
     # Сбросить состояние, чтобы начать новый заказ
     await state.reset_state()

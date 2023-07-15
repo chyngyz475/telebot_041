@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Application, Worker, Order
+from .models import Application, Worker, Order, Wholesale
 from .models import Status
 
 class ApplicationAdmin(admin.ModelAdmin):
@@ -21,3 +21,9 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = ()
 
 admin.site.register(Order, OrderAdmin)
+
+
+class WholesaleAdmin(admin.ModelAdmin):
+    list_display = ()
+
+admin.site.register(Wholesale, WholesaleAdmin)

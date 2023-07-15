@@ -72,6 +72,7 @@
     <table id="applicationTable">
         <thead>
             <tr>
+                <th>Дата создания</th> 
                 <th>Имя пользователя</th>
                 <th>Артикул продукта</th>
                 <th>Цвет</th>
@@ -83,7 +84,7 @@
         <tbody>
             {% for application in applications %}
             <tr>
-                
+              <td>{{ application.creation_date }}</td>  
                 <td>{{ application.name }}</td>
                 <td>{{ application.sku }}</td>
                 <td>{{ application.color }}</td>

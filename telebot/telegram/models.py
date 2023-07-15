@@ -59,3 +59,36 @@ class Order(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Wholesale(models.Model):
+    name = models.CharField(
+        max_length=255,
+        verbose_name='Имя пользователя',
+        )
+    sku = models.CharField(
+        max_length=255,
+        verbose_name='Артикул товара',
+        )
+    color = models.CharField(
+        max_length=255,
+        verbose_name='Цвет товара',
+        )
+    colorb = models.CharField(
+        max_length=255,
+        verbose_name='Цвет товара Б/У',
+        )
+    size = models.CharField(
+        max_length=255,
+        verbose_name='Размер товара',
+        )
+    amount = models.FloatField()
+    status = models.ForeignKey(Status, on_delete=models.CASCADE)
+
+    photo = models.ImageField(
+        upload_to='photos/', blank=True, null=True
+        )
+
+    class Meta:
+        verbose_name = 'Товар'
+        verbose_name_plural = 'Товары'
