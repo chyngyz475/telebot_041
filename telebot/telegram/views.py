@@ -11,7 +11,7 @@ def orders_view(request):
 def Core(request):
     applications = Application.objects.all()
     status = Status.objects.all()
-    paginator = Paginator(applications, 10)
+    paginator = Paginator(applications, 20)
 
 
     page_number = request.GET.get('page')  # Get the current page number from the request

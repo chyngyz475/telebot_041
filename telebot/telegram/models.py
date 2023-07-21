@@ -45,6 +45,7 @@ class Application(models.Model):
         upload_to='photos/', blank=True, null=True
         )
 
+
     class Meta:
         verbose_name = 'Товар'
         verbose_name_plural = 'Товары'

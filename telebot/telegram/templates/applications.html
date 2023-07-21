@@ -70,31 +70,41 @@
       </nav>
     <!-- Table -->
     <table id="applicationTable">
-        <thead>
-            <tr>
-                <th>Дата создания</th> 
-                <th>Имя пользователя</th>
-                <th>Артикул продукта</th>
-                <th>Цвет</th>
-                <th>Размер</th>
-                <th>Сумма</th>
-                <th>Статус заказа</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for application in applications %}
-            <tr>
-              <td>{{ application.creation_date }}</td>  
-                <td>{{ application.name }}</td>
-                <td>{{ application.sku }}</td>
-                <td>{{ application.color }}</td>
-                <td>{{ application.size }}</td>
-                <td>{{ application.amount }}</td>
-                <td>{{ application.status.names }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
+      <thead>
+        <tr>
+          <th>Дата создания</th>
+          <th>Имя пользователя</th>
+          <th>Артикул продукта</th>
+          <th>Цвет</th>
+          <th>Размер</th>
+          <th>Сумма</th>
+          <th>Статус заказа</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for application in applications %}
+        <tr>
+          <td>{{ application.creation_date }}</td>
+          <td>{{ application.name }}</td>
+          <td>{{ application.sku }}</td>
+          <td>{{ application.color }}</td>
+          <td>{{ application.size }}</td>
+          <td>{{ application.amount }}</td>
+          <td>
+            <select name="status" id="status{{ application.id }}">
+              <option value="status1" {% if application.status == 'status1' %}selected{% endif %}>{{ application.status.names }}</option>
+              <option value="status2" {% if application.status == 'status2' %}selected{% endif %}>{{ application.status.names }}</option>
+              <option value="status3" {% if application.status == 'status3' %}selected{% endif %}>{{ application.status.names }}</option>
+              <!-- Add more options as needed -->
+            </select>
+            <button onclick="updateStatus('{{ application.id }}')">Update</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
+    
+    
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.js"></script>
@@ -119,6 +129,23 @@
                 }
             });
         });
+    function updateStatus(applicationId) {
+    var statusSelect = document.getElementById('status' + applicationId);
+    var selectedStatus = statusSelect.value;
+
+    // Make an AJAX request to update the status
+    // Replace the URL and data with your actual implementation
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/update_status', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+            // Handle the response if needed
+            console.log('Status updated successfully');
+        }
+    };
+    xhr.send(JSON.stringify({ id: applicationId, status: selectedStatus }));
+}
     </script>
 
     <!-- Footer -->

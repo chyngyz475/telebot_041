@@ -15,6 +15,8 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from datetime import datetime
 
 
+
+
 def generate_item_id():
     # Generate a unique item ID using UUID (Universally Unique Identifier)
     item_id = str(uuid.uuid4())
@@ -162,7 +164,6 @@ async def process_size(message: types.Message, state: FSMContext):
 async def process_amount(message: types.Message, state: FSMContext):
     amount_in_yuan = message.text.strip()
 
-    
     exchange_rate = 9.6  # Example exchange rate, replace with the actual exchange rate
     amount_in_rubles = float(amount_in_yuan) * exchange_rate
 
@@ -197,10 +198,21 @@ async def process_amount(message: types.Message, state: FSMContext):
     message_text += "📷 После оплаты присылайте чек/фото перевода.\n"
     message_text += "✉️ Отправьте скриншот оплаты.\n"
 
-
     await message.reply(message_text)
     await CheckoutRetailState.photo.set()
 
+        # Save the order to the order history
+    order = {
+        'item_id': item_id,
+        'name': name,
+        'sku': sku,
+        'color': color,
+        'size': size,
+        'amount_in_yuan': amount_in_yuan,
+        'amount_in_rubles': amount_in_rubles,
+        'creation_date': creation_date
+    }
+    order_history.append(order)
 
     # Save the data in the PostgreSQL database
     cursor = conn.cursor()
@@ -235,6 +247,34 @@ async def process_photo(message: types.Message, state: FSMContext):
     await state.reset_state()
 
 
+#история заказов 
+
+order_history = []  # Define the order history list
+
+@dp.callback_query_handler(lambda query: query.data == 'order_history')
+async def handle_order_history(query: types.CallbackQuery):
+    # Retrieve the order history
+    order_history = handle_order_history()
+
+    if order_history:
+        message_text = "📜 Ваша история заказов:\n\n"
+        for order in order_history:
+            message_text += f"📦 Заказ ID: {order['item_id']}\n"
+            message_text += f"📅 Дата создания: {order['creation_date']}\n"
+            message_text += f"👤 Full Name: {order['name']}\n"
+            message_text += f"🏷️ Product SKU: {order['sku']}\n"
+            message_text += f"🎨 Color: {order['color']}\n"
+            message_text += f"📏 Size: {order['size']}\n"
+            message_text += f"💰 Amount in Yuan: {order['amount_in_yuan']} CNY\n"
+            message_text += f"💵 Amount in Rubles: {order['amount_in_rubles']:.2f} RUB\n\n"
+            message_text += "==============================\n\n"
+
+        await query.message.reply(message_text)
+    else:
+        await query.message.reply("У вас пока нет заказов.")
+
+
+
 
 
 # Оптовая торговля
@@ -251,6 +291,8 @@ async def process_name(message: types.Message, state: FSMContext):
     await state.update_data(namewh=namewh)
     await CheckoutWholesaleState.next()
     await message.reply("Введите артикул C POIZON:")
+    await message.reply("Для добавления еще одного товара нажмите кнопку 'Добавить товар' или наберите 'Готово', чтобы завершить оформление заказа.")
+
 
 
 @dp.message_handler(state=CheckoutWholesaleState.skuwh)
@@ -288,33 +330,31 @@ async def process_amount(message: types.Message, state: FSMContext):
     await CheckoutWholesaleState.next()
 
     data = await state.get_data()
-    namewh = data['name']
-    skuwh = data['sku']
-    colorwh = data['color']
-    sizewh = data['size']
-    amountwh = data['amount']
+    namewh = data['namewh']
+    skuwh = data['skuwh']
+    colorwh = data['colorwh']
+    sizewh = data['sizewh']
+    amountwh = data['amountwh']
 
-    message_text = f"Подтверждение заказа:\n\n"
-    message_text += f"Full Name: {namewh}\n"
-    message_text += f"Product SKU: {skuwh}\n"
-    message_text += f"Color: {colorwh}\n"
-    message_text += f"Size: {sizewh}\n"
-    message_text += f"Amount: {amountwh}\n\n"
-    message_text += f"Оплата производится переводом на карту.\n"
-    message_text += f"✅Рабочие карта✅\n"
-    message_text += f"Тинькофф Номер карты Получатель\n"
-    message_text += f"2211220088889991\n"
-    message_text += f"Иванов Иван Иванович\n"
-    message_text += "После оплаты присылайте чек/фото перевода.\n"
-    message_text += f"Отправьте скриншот оплаты.\n"
-
-
+    message_text = "📦 Подтверждение заказа:\n\n"
+    message_text += f"👤 Full Name: {namewh}\n"
+    message_text += f"🏷️ Product SKU: {skuwh}\n"
+    message_text += f"🎨 Color: {colorwh}\n"
+    message_text += f"📏 Size: {sizewh}\n"
+    message_text += f"💰 Amount: {amountwh}\n\n"
+    message_text += "💳 Оплата производится переводом на карту.\n\n"
+    message_text += "✅ Рабочие карта ✅\n"
+    message_text += "🏦 Тинькофф Номер карты Получатель\n"
+    message_text += "2211220088889991\n"
+    message_text += "👤 Иванов Иван Иванович\n\n"
+    message_text += "📷 После оплаты присылайте чек/фото перевода.\n"
+    message_text += "✉️ Отправьте скриншот оплаты.\n"
 
     await message.reply(message_text)
     await CheckoutWholesaleState.photo.set()
 
     # Send the collected data to a Telegram account
-    message_text = f"New Order\n\n"
+    message_text = "New Wholesale Order\n\n"
     message_text += f"Full Name: {namewh}\n"
     message_text += f"Product SKU: {skuwh}\n"
     message_text += f"Color: {colorwh}\n"
@@ -324,29 +364,33 @@ async def process_amount(message: types.Message, state: FSMContext):
     chat_id = '@Chyngyz0411'
 
     await bot.send_message(chat_id='chat_id', text=message_text)
+    
+
+
+    await message.reply("Товар успешно добавлен.")
+
+    # Check if the user wants to add another item
+    await message.reply("Если вы хотите добавить еще один товар, нажмите кнопку 'Добавить товар'.\n"
+                        "Если вы закончили добавление товаров, наберите 'Готово', чтобы завершить оформление заказа.")
 
 
 @dp.message_handler(content_types=types.ContentType.PHOTO, state=CheckoutWholesaleState.photo)
 async def process_photo(message: types.Message, state: FSMContext):
     photo_id = message.photo[-1].file_id
 
-    
-
     data = await state.get_data()
-    namewh = data['name']
-    skuwh = data['sku']
-    colorwh = data['color']
-    sizewh = data['size']
-    amountwh = data['amount']
-
+    namewh = data['namewh']
+    skuwh = data['skuwh']
+    colorwh = data['colorwh']
+    sizewh = data['sizewh']
+    amountwh = data['amountwh']
 
     # Save all the collected data and photo to the database
     # Replace this code with your database integration logic
 
-
-
-    await message.reply("Заказ успешно размещен. Спасибо мы скоро свяжемся с вами!")
-
+    await message.reply("Заказ успешно размещен. Спасибо, мы скоро свяжемся с вами!", reply_markup=types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True).add(
+    types.KeyboardButton("Меню")
+))
     # Reset the state to start a new order
     await state.reset_state()
 
@@ -513,6 +557,8 @@ async def handle_answers(query: types.CallbackQuery):
     await query.message.reply(message_text, parse_mode='HTML', reply_markup=keyboard)
 
 # Ответы на популярные вопросы
+
+
 
 
 if __name__ == '__main__':
