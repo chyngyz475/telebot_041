@@ -389,8 +389,10 @@ async def process_photo(message: types.Message, state: FSMContext):
     # Replace this code with your database integration logic
 
     await message.reply("Заказ успешно размещен. Спасибо, мы скоро свяжемся с вами!", reply_markup=types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True).add(
-    types.KeyboardButton("Меню")
-))
+        types.KeyboardButton("Меню")
+    ))
+
+
     # Reset the state to start a new order
     await state.reset_state()
 
