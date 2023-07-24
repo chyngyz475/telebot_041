@@ -1,4 +1,4 @@
-from django.utils import timezone
+
 from django.db import models
 
 class Status(models.Model):
@@ -93,3 +93,17 @@ class Wholesale(models.Model):
     class Meta:
         verbose_name = 'Товар'
         verbose_name_plural = 'Товары'
+
+
+class WholesaleOrder(models.Model):
+    username = models.TextField(verbose_name='Имя пользователя',)
+    quantity = models.IntegerField()
+    item_sku = models.TextField(verbose_name='Артикул товара',)
+    item_color = models.TextField(verbose_name='Color',)
+    item_size = models.TextField(verbose_name='Размер товара',)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    photo = models.BinaryField()
+    status = models.ForeignKey(Status, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.username} - Order ID: {self.id}"

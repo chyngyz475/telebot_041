@@ -3,6 +3,8 @@ from .models import Application
 from .models import Status,Wholesale
 from telegram.models import Order
 from django.core.paginator import Paginator
+from .models import WholesaleOrder
+
 
 def orders_view(request):
     orders = Order.objects.all()
@@ -23,6 +25,25 @@ def Core(request):
         'page_obj': page_obj,
 
     }
+    return render(request, 'applications.html',context=context)
+
+
+def wholesale_orders_view(request):
+    orders = WholesaleOrder.objects.all()
+    status = Status.objects.all()
+    paginator = Paginator(orders, 20)
+
+
+    page_number = request.GET.get('page')  # Get the current page number from the request
+    page_obj = paginator.get_page(page_number)
+
+
+    context = {
+        'orders': orders,
+        'status' : status,
+        'page_obj': page_obj
+    }
+    
     return render(request, 'applications.html',context=context)
 
 def wholesale_view(request):
