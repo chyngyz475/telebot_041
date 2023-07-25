@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-p$zzb9f6!ye$@*$z_s)%+v=(ama+iblei-ugv#9rppiy48$lsd
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['krosadmin.space','krosadmin.space']
 
 
 # Application definition
@@ -133,6 +133,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
 
