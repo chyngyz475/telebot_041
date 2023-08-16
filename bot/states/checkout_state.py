@@ -1,12 +1,24 @@
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
 
-class CheckoutState(StatesGroup):
-    Name = State()  # Ввод имени
-    SKU = State()  # Ввод артикула
-    Color = State()  # Ввод цвета товара
-    Size = State()  # Ввод размера
-    Amount = State()  # Ввод суммы
-    Photo = State()  # Загрузка фото оплаты
-    # Добавьте здесь другие состояния, связанные с оформлением заказа
+class CalculatorState(StatesGroup):
+    price = State()
 
+    price = State()
+
+class CheckoutRetailState(StatesGroup):
+    name = State()    
+    sku = State()    
+    color = State()   
+    size = State()    
+    amount = State()  
+    photo = State()   
+
+class CheckoutWholesaleState(StatesGroup):
+    username = State()
+    quantitywh = State()
+    item_details = State()
+    sizewh = State()
+    amountwh = State()
+    photowh = State() 
+  

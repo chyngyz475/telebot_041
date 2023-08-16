@@ -1,4 +1,6 @@
 
+from django.utils import timezone
+import uuid
 from django.db import models
 
 class Status(models.Model):
@@ -12,98 +14,80 @@ class Status(models.Model):
         verbose_name_plural = 'Статус'
 
 class Worker(models.Model):
-    function = models.CharField(max_length=150, verbose_name='Работник',)
-
-    def __str__(self) -> str:
-        return str(self.function)
-    
     class Meta:
         verbose_name = 'Сотрудник'
         verbose_name_plural = 'Сотрудник'
 
-class Application(models.Model):
-    name = models.CharField(
-        max_length=255,
-        verbose_name='Имя пользователя',
-        )
-    sku = models.CharField(
-        max_length=255,
-        verbose_name='Артикул товара',
-        )
-    color = models.CharField(
-        max_length=255,
-        verbose_name='Цвет товара',
-        )
-    size = models.CharField(
-        max_length=255,
-        verbose_name='Размер товара',
-        )
-    amount = models.FloatField()
-    status = models.ForeignKey(Status, on_delete=models.CASCADE)
-
-    photo = models.ImageField(
-        upload_to='photos/', blank=True, null=True
-        )
+    function = models.CharField(max_length=150, verbose_name='Работник',)
+    def __str__(self) -> str:
+        return str(self.function)
+    
 
 
+    
+
+class WholesaleOrderTelegtam(models.Model):
     class Meta:
-        verbose_name = 'Товар'
-        verbose_name_plural = 'Товары'
+        verbose_name = 'ЗаказОптом'
+        verbose_name_plural = 'ЗаказыОптом'
 
-
-class Order(models.Model):
-    name = models.CharField(max_length=100)
-    sku = models.CharField(max_length=100)
-    color = models.CharField(max_length=100)
-    size = models.CharField(max_length=100)
-    amount = models.IntegerField()
-
-    def __str__(self):
-        return self.name
-
-
-class Wholesale(models.Model):
-    name = models.CharField(
-        max_length=255,
-        verbose_name='Имя пользователя',
-        )
-    sku = models.CharField(
-        max_length=255,
-        verbose_name='Артикул товара',
-        )
-    color = models.CharField(
-        max_length=255,
-        verbose_name='Цвет товара',
-        )
-    colorb = models.CharField(
-        max_length=255,
-        verbose_name='Цвет товара Б/У',
-        )
-    size = models.CharField(
-        max_length=255,
-        verbose_name='Размер товара',
-        )
-    amount = models.FloatField()
-    status = models.ForeignKey(Status, on_delete=models.CASCADE)
-
-    photo = models.ImageField(
-        upload_to='photos/', blank=True, null=True
-        )
-
-    class Meta:
-        verbose_name = 'Товар'
-        verbose_name_plural = 'Товары'
-
-
-class WholesaleOrder(models.Model):
-    username = models.TextField(verbose_name='Имя пользователя',)
+    # Existing fields
+    username = models.TextField(verbose_name='Имя пользователя')
     quantity = models.IntegerField()
-    item_sku = models.TextField(verbose_name='Артикул товара',)
-    item_color = models.TextField(verbose_name='Color',)
-    item_size = models.TextField(verbose_name='Размер товара',)
+    item_sku = models.TextField(verbose_name='Артикул товара')
+    item_color = models.TextField(verbose_name='Color')
+    item_size = models.TextField(verbose_name='Размер товара')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    photo = models.BinaryField()
+    photowh = models.ImageField(upload_to='photos/', blank=True, null=True)
     status = models.ForeignKey(Status, on_delete=models.CASCADE)
 
+    # New fields
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, verbose_name='Уникальный ID')
+
     def __str__(self):
-        return f"{self.username} - Order ID: {self.id}"
+        return str(self.username)
+    
+
+class Retail(models.Model):
+    class Meta:
+        verbose_name = 'Товар'
+        verbose_name_plural = 'Товары'
+
+    # Existing fields
+    name = models.CharField(max_length=255, verbose_name='Имя пользователя')
+    sku = models.CharField(max_length=255, verbose_name='Артикул товара')
+    color = models.CharField(max_length=255, verbose_name='Цвет товара')
+    size = models.CharField(max_length=255, verbose_name='Размер товара')
+    amount = models.FloatField()
+    status = models.ForeignKey(Status, on_delete=models.CASCADE)
+    photo = models.ImageField(upload_to='photos/', blank=True, null=True)
+
+    # New fields
+    created_date = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, verbose_name='Уникальный ID')
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class RetailOrder(models.Model):
+    class Meta:
+        verbose_name = 'Товар'
+        verbose_name_plural = 'Товары'
+
+    # Existing fields
+    name = models.CharField(max_length=255, verbose_name='Имя пользователя')
+    sku = models.CharField(max_length=255, verbose_name='Артикул товара')
+    color = models.CharField(max_length=255, verbose_name='Цвет товара')
+    size = models.CharField(max_length=255, verbose_name='Размер товара')
+    amount = models.FloatField()
+    status = models.ForeignKey(Status, on_delete=models.CASCADE)
+    photo = models.ImageField(upload_to='photos/', blank=True, null=True)
+
+    # New fields
+    created_date = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, verbose_name='Уникальный ID')
+
+    def __str__(self) -> str:
+        return str(self.name)

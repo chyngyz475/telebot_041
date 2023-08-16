@@ -26,7 +26,9 @@ SECRET_KEY = 'django-insecure-p$zzb9f6!ye$@*$z_s)%+v=(ama+iblei-ugv#9rppiy48$lsd
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['krosadmin.space','krosadmin.space']
+ALLOWED_HOSTS = []
+
+
 
 
 # Application definition
@@ -39,15 +41,17 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'telegram',
+    'rest_framework',
     
 ]
 
 REST_FRAMEWORK = {
-    # Use Django's standard `django.contrib.auth` permissions,
-    # or allow read-only access for unauthenticated users.
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
-    ]
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
 }
 
 MIDDLEWARE = [
@@ -65,7 +69,7 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, "templates")],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -87,10 +91,10 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'telebot',
-        'USER': 'telebot',
-        'PASSWORD': 'xsyusp',
-        'HOST': 'localhost',
+        'NAME': 'chyngyz',
+        'USER': 'admin',
+        'PASSWORD': 'C00lBRS123',
+        'HOST': 'coolbrs.com',
         'PORT': '5432',
     }
 }

@@ -2,8 +2,10 @@ import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters import Command
-from keyboards.menu import get_menu_keyboard, get_back_keyboard, get_checkout_keyboard
+import requests
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters import Text
+from keyboards.menu import get_menu_keyboard
 from keyboards.menu import menu_buttons
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
@@ -11,29 +13,20 @@ from aiogram import types
 from openpyxl import Workbook
 import psycopg2
 import uuid
-from aiogram.dispatcher.filters.state import State, StatesGroup
-from datetime import datetime
-from utils import database
 
 
 
-def generate_item_id():
-    # Generate a unique item ID using UUID (Universally Unique Identifier)
-    item_id = str(uuid.uuid4())
-    return item_id
 
-workbook = Workbook()
-sheet = workbook.active
-
-status_id = 1
-
-conn = psycopg2.connect(
-    host='localhost',
-    port='5432',
-    database='telebot',
-    user='telebot',
-    password='xsyusp'
-)
+menu_buttons = {
+    'checkout': '🛒 Оформление заказа',
+    'calculator': '🧮 Калькулятор',
+    'answers': '❓ Ответы на популярные вопросы',
+    'contact': '📞 Связь с менеджером',
+    'status': '📦 Статус заказа',
+    'course': '🎓 Курс',
+    'delivery': '🚚 Доставка',
+    'order_history': '📜 История заказов'
+}
 
 class CalculatorState(StatesGroup):
     price = State()
@@ -54,14 +47,33 @@ class CheckoutWholesaleState(StatesGroup):
     item_details = State()
     sizewh = State()
     amountwh = State()
-    photo = State() 
+    photowh = State() 
+  
+
+
+def generate_item_id():
+    # Generate a unique item ID using UUID (Universally Unique Identifier)
+    item_id = str(uuid.uuid4())
+    return item_id
+
+workbook = Workbook()
+sheet = workbook.active
+
+
+conn = psycopg2.connect(
+    host='localhost',
+    port='5432',
+    database='telebot',
+    user='telebot',
+    password='xsyusp'
+)
   
 
 class StatusForm(StatesGroup):
     ID_PRODUCT = State()
 
 
-API_TOKEN = '6264165442:AAEQsZpC61iYI49cCl8iEjFlBlRnaQw0kr4' 
+API_TOKEN = '5952272138:AAH6RdyapDFqaM-TsaCNjw6AeFy29mUV4iA' 
 
 logging.basicConfig(level=logging.INFO)
 
@@ -75,17 +87,6 @@ async def start_handler(message: types.Message):
     await message.reply('Здравствуйте, добро пожаловать в бот группы "Хороший бизнес" ! Мы рады, что выбрали нас. ', reply_markup=get_menu_keyboard())
 
 
-@dp.message_handler(commands=['help'])
-async def help_handler(message: types.Message):
-    await message.reply('если у вас есть вопросы', reply_markup=get_menu_keyboard())
-
-
-@dp.message_handler(commands=['menu'])
-async def menu_handler(message: types.Message):
-    await message.reply('Меню главное', reply_markup=get_menu_keyboard())
-
-
-
 
 @dp.callback_query_handler(lambda query: query.data == 'back', state='*')
 async def process_back_callback(query: types.CallbackQuery, state: FSMContext):
@@ -96,7 +97,7 @@ async def process_back_callback(query: types.CallbackQuery, state: FSMContext):
         types.InlineKeyboardButton("⬅️ Назад", callback_data='back'),
     ]
     keyboard.add(*buttons)
-    await query.message.edit_text('Main Menu', reply_markup=get_menu_keyboard())
+    await query.message.edit_text('Meню', reply_markup=get_menu_keyboard())
     await state.finish()  # Очистить текущее состояние
 
 
@@ -113,54 +114,62 @@ async def handle_checkout(query: types.CallbackQuery):
 
     await query.message.reply("Пожалуйста, выберите вариант:", reply_markup=keyboard)
 
-
+# остановить заказ
+@dp.message_handler(commands=['cancel'], state='*')
+@dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
+async def cancel_handler(message: types.Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state is not None:
+        logging.info('Cancelling state %r', current_state)
+        await state.finish()
+        await message.reply('Вы отменили текущее действие.')
 # Оформить заказ
 
 
 # Розничная торговля
-
 @dp.callback_query_handler(lambda query: query.data == 'checkout_retail')
 async def handle_checkout_retail(query: types.CallbackQuery):
-    await CheckoutRetailState.first()
-    await query.message.reply("Введите свое имя пользователя в телеграмм через @, чтобы создать заказ:")
+    await bot.send_message(query.from_user.id, "Вы выбрали розничную торговлю.")
+    await bot.send_message(query.from_user.id, "Введите свое имя пользователя в телеграмм через @, чтобы создать заказ:")
+    await CheckoutRetailState.name.set()
 
+@dp.callback_query_handler(lambda query: query.data == 'checkout_retail')
+async def order_handler(message: types.Message):
+    await CheckoutRetailState.first()
+    await message.reply("Введите свое имя пользователя в телеграмм через @, чтобы создать заказ:")
 
 @dp.message_handler(state=CheckoutRetailState.name)
 async def process_name(message: types.Message, state: FSMContext):
     name = message.text.strip()
-
+    if not name.startswith('@'):
+        await message.reply("Имя пользователя должно начинаться с @. Пожалуйста, введите корректное имя пользователя.")
+        return
     await state.update_data(name=name)
     await CheckoutRetailState.next()
     await message.reply("Введите артикул C POIZON:")
 
-
 @dp.message_handler(state=CheckoutRetailState.sku)
 async def process_sku(message: types.Message, state: FSMContext):
     sku = message.text.strip()
-
     await state.update_data(sku=sku)
     await CheckoutRetailState.next()
     await message.reply("Введите цвет товара:")
 
-
 @dp.message_handler(state=CheckoutRetailState.color)
 async def process_color(message: types.Message, state: FSMContext):
     color = message.text.strip()
-
     await state.update_data(color=color)
     await CheckoutRetailState.next()
     await message.reply("Введите размер:")
 
-
 @dp.message_handler(state=CheckoutRetailState.size)
 async def process_size(message: types.Message, state: FSMContext):
     size = message.text.strip()
-
     await state.update_data(size=size)
     await CheckoutRetailState.next()
     await message.reply("Введите сумму:")
 
-
+# Калькулятор расчет стоимости заказа
 @dp.message_handler(state=CheckoutRetailState.amount)
 async def process_amount(message: types.Message, state: FSMContext):
     amount_in_yuan = message.text.strip()
@@ -170,7 +179,7 @@ async def process_amount(message: types.Message, state: FSMContext):
 
     await state.update_data(amount=amount_in_yuan)
     await CheckoutRetailState.next()
-
+# Калькулятор расчет стоимости заказа
     data = await state.get_data()
     name = data['name']
     sku = data['sku']
@@ -178,10 +187,8 @@ async def process_amount(message: types.Message, state: FSMContext):
     size = data['size']
     amount_in_yuan = data['amount']
     amount_in_rubles = amount_in_rubles
-
-    creation_date = datetime.now()
-
-    item_id = generate_item_id() 
+# Генерация уникального идентификатора товара
+    item_id = generate_item_id()            
 
     message_text = "📦 Подтверждение заказа:\n\n"
     message_text += f"👤 Full Name: {name}\n"
@@ -199,34 +206,11 @@ async def process_amount(message: types.Message, state: FSMContext):
     message_text += "📷 После оплаты присылайте чек/фото перевода.\n"
     message_text += "✉️ Отправьте скриншот оплаты.\n"
 
+# Отправить сообщение пользователю
     await message.reply(message_text)
+
+    # Сохранить заказ в базе данных
     await CheckoutRetailState.photo.set()
-
-       
-    order = {
-        'item_id': item_id,
-        'name': name,
-        'sku': sku,
-        'color': color,
-        'size': size,
-        'amount_in_yuan': amount_in_yuan,
-        'amount_in_rubles': amount_in_rubles,
-        'creation_date': creation_date
-    }
-    order_history.append(order)
-
-    
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO telegram_application (name, sku, color, size, amount, status_id, creation_date ) VALUES (%s, %s, %s, %s, %s, %s)",
-        (name, sku, color, size, amount_in_yuan, amount_in_rubles, status_id, creation_date)
-    )
-    conn.commit()
-
-  
-    row = [name, sku, color, size, amount_in_yuan, amount_in_rubles,]
-    sheet.append(row)
-    workbook.save('orders.xlsx')
 
 
 @dp.message_handler(content_types=types.ContentType.PHOTO, state=CheckoutRetailState.photo)
@@ -239,60 +223,83 @@ async def process_photo(message: types.Message, state: FSMContext):
     color = data['color']
     size = data['size']
     amount = data['amount']
+    status_id = data['status']
 
-    # Create and save the Application object in the database
-    application = Application.objects.create(
-        name=name,
-        sku=sku,
-        color=color,
-        size=size,
-        amount=amount,
-        photo=photo_id,
-    )
+    status_id = generate_status_id()
+    await state.update_data(status=status_id)
 
+    # Подготовка данных для вставки в базу данных
+    order_data = {  
+        'name': name,
+        'sku': sku,
+        'color': color,
+        'size': size,
+        'amount': amount,
+        'photo': f"/media/photos/{photo_id}",  # Замените на ваш путь к фото
+        'status': status_id,
+    }
 
-    await message.reply("Заказ успешно размещен. Спасибо, мы скоро свяжемся с вами!", reply_markup=types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True).add(
-    types.KeyboardButton("Меню")
-))
+    cur = conn.cursor()
 
-    # Сбросить состояние, чтобы начать новый заказ
-    await state.reset_state()
+    # SQL-запрос для вставки данных
+    insert_query = """
+    INSERT INTO telegram_retailorder (name, sku, color, size, amount, photo, status)
+    VALUES (%(name)s, %(sku)s, %(color)s, %(size)s, %(amount)s, %(photo)s, %(status)s);
+    """
 
+    # Выполнение SQL-запроса
+    cur.execute(insert_query, order_data)
+
+    # Подтверждение изменений и закрытие соединения
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    # Отправляем сообщение пользователю
+    await message.reply("Заказ успешно размещен. Спасибо, мы скоро свяжемся с вами!")
 
 #история заказов 
 
-order_history = []  # Определяем список истории заказов
+# order_history = []  # Определяем список истории заказов
 
-@dp.callback_query_handler(lambda query: query.data == 'order_history')
-async def handle_order_history(query: types.CallbackQuery):
-    # Получить историю заказов
-    order_history = handle_order_history()
+# @dp.callback_query_handler(lambda query: query.data == 'order_history')
+# async def handle_order_history(query: types.CallbackQuery):
+#     # Получить историю заказов
+#     order_history = handle_order_history()
 
-    if order_history:
-        message_text = "📜 Ваша история заказов:\n\n"
-        for order in order_history:
-            message_text += f"📦 Заказ ID: {order['item_id']}\n"
-            message_text += f"📅 Дата создания: {order['creation_date']}\n"
-            message_text += f"👤 Full Name: {order['name']}\n"
-            message_text += f"🏷️ Product SKU: {order['sku']}\n"
-            message_text += f"🎨 Color: {order['color']}\n"
-            message_text += f"📏 Size: {order['size']}\n"
-            message_text += f"💰 Amount in Yuan: {order['amount_in_yuan']} CNY\n"
-            message_text += f"💵 Amount in Rubles: {order['amount_in_rubles']:.2f} RUB\n\n"
-            message_text += "==============================\n\n"
+#     if order_history:
+#         message_text = "📜 Ваша история заказов:\n\n"
+#         for order in order_history:
+#             message_text += f"📦 Заказ ID: {order['item_id']}\n"
+#             message_text += f"📅 Дата создания: {order['creation_date']}\n"
+#             message_text += f"👤 Full Name: {order['name']}\n"
+#             message_text += f"🏷️ Product SKU: {order['sku']}\n"
+#             message_text += f"🎨 Color: {order['color']}\n"
+#             message_text += f"📏 Size: {order['size']}\n"
+#             message_text += f"💰 Amount in Yuan: {order['amount_in_yuan']} CNY\n"
+#             message_text += f"💵 Amount in Rubles: {order['amount_in_rubles']:.2f} RUB\n\n"
+#             message_text += "==============================\n\n"
 
-        await query.message.reply(message_text)
+#         await query.message.reply(message_text)
+#     else:
+#         await query.message.reply("У вас пока нет заказов.")
+
+
+@dp.message_handler(commands=['cancel'], state='*')
+async def cancel_handler(message: types.Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state is not None:
+        logging.info(f"Cancelling state {current_state}")
+        await state.finish()  # Сбрасываем текущее состояние пользователя
+        await message.reply("Вы отменили текущее действие. Можете начать заново.")
     else:
-        await query.message.reply("У вас пока нет заказов.")
-
-
-
+        await message.reply("Нет активных действий для отмены.")
 
 
 # Оптовая торговля
 @dp.callback_query_handler(lambda query: query.data == 'checkout_wholesale')
 async def handle_checkout_wholesale(query: types.CallbackQuery):
-    await CheckoutWholesaleState.username.set()
+    await CheckoutWholesaleState.first()
     await query.message.reply("Введите свое имя пользователя в телеграмм через @, чтобы создать заказ:")
 
 @dp.message_handler(state=CheckoutWholesaleState.username)
@@ -310,7 +317,7 @@ async def process_quantity(message: types.Message, state: FSMContext):
     await state.update_data(quantitywh=quantitywh)
     await CheckoutWholesaleState.next()
     await message.reply("Введите артикул C POIZON и цвет кнопки для каждого товара, разделяя их по строкам. Например:\n"
-                        "DD1903-100 Синяя\n"
+                        "DD1903-100 Синяя \n"
                         "CW2288-111 Черная")
 
 @dp.message_handler(state=CheckoutWholesaleState.item_details)
@@ -354,6 +361,7 @@ async def process_amount(message: types.Message, state: FSMContext):
     await state.update_data(amountwh=amountwh)
     await CheckoutWholesaleState.next()
 
+    # Retrieve the data from the state
     data = await state.get_data()
     username = data['username']
     quantitywh = data['quantitywh']
@@ -361,59 +369,68 @@ async def process_amount(message: types.Message, state: FSMContext):
     sizewh = data['sizewh']
     amountwh = data['amountwh']
 
+    # Prepare the message text
     message_text = f"👤 Пользователь: {username}\n"
     message_text += f"🛍️ Количество позиций: {quantitywh}\n"
     message_text += "📋 Детали заказа:\n"
 
-# Перебираем элементы items_data и добавляем детали каждого элемента в message_text
+    # Loop through items_data and add details for each item
     for i, (sku, color) in enumerate(items_data, start=1):
         message_text += f"Товар {i}:\n"
         message_text += f"  🏷️ Артикул C POIZON: {sku}\n"
         message_text += f"  🎨 Цвет кнопки: {color}\n"
         message_text += f"  📏 Размер: {sizewh}\n\n"
 
-    message_text += f"💰 Общая сумма заказа: {amountwh}\n"
-    message_text += "💳 Оплата производится переводом на карту.\n"
-    message_text += "✅ Рабочие карта ✅\n"
-    message_text += "🏦 Тинькофф Номер карты Получатель\n"
-    message_text += "2211220088889991\n"
-    message_text += "👤 Иванов Иван Иванович\n\n"
+    message_text += f"💰 Общая сумма заказа: {amountwh} юани\n"
+    message_text += "🔗 Перейдите по ссылке для оплаты: [Оплатить](https://example.com)\n"
     message_text += "📷 После оплаты присылайте чек/фото перевода.\n"
     message_text += "✉️ Отправьте скриншот оплаты.\n"
 
-    await message.reply(message_text)
-    await CheckoutWholesaleState.photo.set()
+    # Send the message to the user
+    await message.reply(message_text, parse_mode="Markdown")
+
+    # Move to the next state to handle photo confirmation
+    await CheckoutWholesaleState.photowh.set()
     await message.reply("Пожалуйста, отправьте фото в качестве подтверждения оплаты.")
 
-@dp.message_handler(content_types=types.ContentType.PHOTO, state=CheckoutWholesaleState.photo)
+@dp.message_handler(content_types=types.ContentType.PHOTO, state=CheckoutWholesaleState.photowh)
 async def process_photo(message: types.Message, state: FSMContext):
     photo_id = message.photo[-1].file_id
 
-    # Save the order data to the database
     data = await state.get_data()
     username = data['username']
-    quantitywh = data['quantitywh']
+    quantity = data['quantitywh']
     items_data = data['items_data']
     sizewh = data['sizewh']
     amountwh = data['amountwh']
-    photo_id = data['photo_id']  # Assuming you have saved the photo_id in the data
+    photo_id = data['photowh']
 
-    # Creating and saving the WholesaleOrder object in the database
-    order = WholesaleOrder.objects.create(
-        username=username,
-        quantitywh=quantitywh,
-        item_sku=[item[0] for item in items_data],
-        item_color=[item[1] for item in items_data],
-        item_size=sizewh,
-        amount=amountwh,
-        photo=photo_id,
+    # Соединение с базой данных
+    conn = psycopg2.connect(
+        host='localhost',
+        port='5432',
+        database='telebot',
+        user='telebot',
+        password='xsyusp'
     )
-    order_history.append(order)
 
+    # Создание курсора
+    cursor = conn.cursor()
+
+    # SQL-запрос для вставки данных
+    insert_query = "INSERT INTO telegram_wholesaleordertelegtam (username, quantity, items_data, sizewh, amountwh, photowh) VALUES (%s, %s, %s, %s, %s, %s)"
+    cursor.execute(insert_query, (username, quantity, items_data, sizewh, amountwh, photo_id))
+
+    # Подтверждение изменений и закрытие соединения
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+# Отправляем сообщение пользователю
     await message.reply("Заказ успешно размещен. Спасибо, мы скоро свяжемся с вами!")
 
-    # Reset the state to start a new order
-    await state.reset_state()
+
+
 
 # Калькулятор расчет стоимости заказа
 
@@ -512,18 +529,20 @@ async def process_product_id(message: types.Message, state: FSMContext):
     product_id = message.text
 
     try:
-        order = Application.objects.get(product_id=product_id)
-        expected_status = order.status  # Assuming `status` field is a CharField or similar
+        # Assuming you have different models for Wholesale and Retail orders
+        wholesale_order = WholesaleOrderTelegtam.objects.get(unique_id=product_id)
+        expected_status = wholesale_order.status
+        # You can define your status mapping here
         status_mapping = {
-            'pending': 'В ожидании',
-            'processing': 'В обработке',
-            'shipped': 'Отправлен',
-            'delivered': 'Доставлен',
+            1: 'В ожидании',
+            2: 'В обработке',
+            3: 'Отправлен',
+            4: 'Доставлен',
         }
         expected_status_text = status_mapping.get(expected_status, 'Неизвестный статус')
 
         message_text = f"Статус товара ID: {product_id}\nОжидаемый статус заказа: {expected_status_text}"
-    except Application.DoesNotExist:
+    except WholesaleOrderTelegtam.DoesNotExist:
         message_text = f"Заказ с ID {product_id} не найден"
 
     await message.reply(message_text)

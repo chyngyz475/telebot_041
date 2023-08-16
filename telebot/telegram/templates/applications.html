@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load static %}
 <html>
 <head>
     <title>Application List</title>
@@ -63,17 +64,17 @@
 <body>
     <nav class="navbar navbar-expand-lg bg-body-tertiary">
         <div class="container-fluid">
-          <a class="navbar-brand" href="#">Navbar</a>
+          <a class="navbar-brand" href="{% url 'application' %}">Navbar</a>
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
           </button>
           <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
               <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="#">Home</a>
+                <a class="nav-link active" aria-current="page" href="{% url 'application' %}">Home</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="#">Link</a>
+                <a class="nav-link" href="{% url 'orders' %}">Оптовый заказ</a>
               </li>
               <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -100,64 +101,65 @@
     <!-- Table -->
     <table id="applicationTable">
       <thead>
+        <h1>Оптовый заказ</h1>
         <tr>
-          <th>Дата создания</th>
-          <th>Имя пользователя</th>
-          <th>Артикул продукта</th>
-          <th>Цвет</th>
-          <th>Размер</th>
-          <th>Сумма</th>
-          <th>Статус заказа</th>
-        </tr>
+          <th>ID</th>
+          <th>Username</th>
+          <th>Quantity</th>
+          <th>Item SKU</th>
+          <th>Item Color</th>
+          <th>Item Size</th>
+          <th>Amount</th>
+          <th>Photo</th>
+          <th>Created At</th>
+          <th>Unique ID</th>
+          <th>Status</th>
+      </tr>
       </thead>
       <tbody>
-        {% for application in applications %}
+        {% for wholesale in wholesales %}
         <tr>
-          <td>{{ application.creation_date }}</td>
-          <td>{{ application.name }}</td>
-          <td>{{ application.sku }}</td>
-          <td>{{ application.color }}</td>
-          <td>{{ application.size }}</td>
-          <td>{{ application.amount }}</td>
-          <td>
-            <select name="status" id="status{{ application.id }}">
-              <option value="status1" {% if application.status == 'status1' %}selected{% endif %}>{{ application.status.names }}</option>
-              <option value="status2" {% if application.status == 'status2' %}selected{% endif %}>{{ application.status.names }}</option>
-              <option value="status3" {% if application.status == 'status3' %}selected{% endif %}>{{ application.status.names }}</option>
-              <!-- Add more options as needed -->
-            </select>
-            <button onclick="updateStatus('{{ application.id }}')">Update</button>
-          </td>
+            <td>{{ wholesale.id }}</td>
+            <td>{{ wholesale.username }}</td>
+            <td>{{ wholesale.quantity }}</td>
+            <td>{{ wholesale.item_sku }}</td>
+            <td>{{ wholesale.item_color }}</td>
+            <td>{{ wholesale.item_size }}</td>
+            <td>{{ wholesale.amount }}</td>
+            <td><img src="{{ wholesale.photowh.url }}" alt="Order Photo" width="100"></td>
+            <td>{{ wholesale.created_at }}</td>
+            <td>{{ wholesale.unique_id }}</td>
+            <td>{{ wholesale.status }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
-    <table id="applicationTable1">
-      <h1>Wholesale Orders</h1>
-          <tr>
-              <th>ID</th>
-              <th>Username</th>
-              <th>Quantity</th>
-              <th>Item SKU</th>
-              <th>Item Color</th>
-              <th>Item Size</th>
-              <th>Amount</th>
-              <th>Photo</th>
-          </tr>
-          {% for order in orders %}
-          <tr>
-              <td>{{ order.id }}</td>
-              <td>{{ order.username }}</td>
-              <td>{{ order.quantity }}</td>
-              <td>{{ order.item_sku }}</td>
-              <td>{{ order.item_color }}</td>
-              <td>{{ order.item_size }}</td>
-              <td>{{ order.amount }}</td>
-              <td>
-                  <img src="{{ order.get_photo_url }}" alt="Order Photo" width="100">
-              </td>
-          </tr>
-          {% endfor %}
+    <table id="applicationTable">
+      <h1>Розничный заказ</h1>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>SKU</th>
+        <th>Color</th>
+        <th>Size</th>
+        <th>Amount</th>
+        <th>Photo</th>
+        <th>Created Date</th>
+        <th>Status</th>
+    </tr>
+    {% for order in orders %}
+    <tr>
+        <td>{{ order.id }}</td>
+        <td>{{ order.name }}</td>
+        <td>{{ order.sku }}</td>
+        <td>{{ order.color }}</td>
+        <td>{{ order.size }}</td>
+        <td>{{ order.amount }}</td>
+        <td><img src="{{ order.photo }}" alt="Order Photo" width="100"></td>
+        <td>{{ order.created_date }}</td>
+        <td>{{ order.status }}</td>
+    </tr>
+    {% endfor %}
     </table>
     
 
@@ -201,6 +203,32 @@
     };
     xhr.send(JSON.stringify({ id: applicationId, status: selectedStatus }));
 }
+
+
+function updateStatus(applicationId, newStatus) {
+        fetch('/update_status/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+            body: `application_id=${applicationId}&new_status=${newStatus}`,
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Handle success (optional)
+                console.log('Status updated successfully');
+            } else {
+                // Handle error (optional)
+                console.error('Failed to update status:', data.error);
+            }
+        })
+        .catch(error => {
+            // Handle error (optional)
+            console.error('An error occurred:', error);
+        });
+    }
     </script>
 
     <!-- Footer -->

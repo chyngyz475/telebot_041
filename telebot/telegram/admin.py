@@ -1,11 +1,6 @@
 from django.contrib import admin
-from .models import Application, Worker, Order, Wholesale
+from .models import Worker, WholesaleOrderTelegtam,RetailOrder
 from .models import Status
-
-class ApplicationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'sku')
-
-admin.site.register(Application, ApplicationAdmin)
 
 class StatusAdmin(admin.ModelAdmin):
     list_display = ('names',)
@@ -17,13 +12,13 @@ class WorkerAdmin(admin.ModelAdmin):
 
 admin.site.register(Worker, WorkerAdmin)
 
-class OrderAdmin(admin.ModelAdmin):
-    list_display = ()
-
-admin.site.register(Order, OrderAdmin)
 
 
-class WholesaleAdmin(admin.ModelAdmin):
-    list_display = ()
+class WholesaleOrderTelegtamAdmin(admin.ModelAdmin):
+    list_display = ('username', 'quantity', 'item_sku', 'item_color', 'item_size', 'amount', 'photowh', 'status', 'created_at', 'unique_id')
 
-admin.site.register(Wholesale, WholesaleAdmin)
+admin.site.register(WholesaleOrderTelegtam, WholesaleOrderTelegtamAdmin)
+
+class RetailOrderAdmin(admin.ModelAdmin):
+    list_display = ('name', 'sku', 'color', 'size', 'amount', 'photo', 'status', 'created_date', 'unique_id')
+admin.site.register(RetailOrder, RetailOrderAdmin)

@@ -1,66 +1,35 @@
 from django.shortcuts import render
-from .models import Application
-from .models import Status,Wholesale
-from telegram.models import Order
+from .models import  RetailOrder, WholesaleOrderTelegtam 
+from .models import Status
 from django.core.paginator import Paginator
-from .models import WholesaleOrder
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import WholesaleOrderTelegtamSerializer, RetailOrderSerializer
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated 
 
 
-def orders_view(request):
-    orders = Order.objects.all()
-    return render(request, 'orders.html', {'orders': orders})
+class WholesaleApi(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = WholesaleOrderTelegtamSerializer
+    queryset = WholesaleOrderTelegtam.objects.all().order_by('id')
 
-def Core(request):
-    applications = Application.objects.all()
-    status = Status.objects.all()
-    paginator = Paginator(applications, 20)
-
-
-    page_number = request.GET.get('page')  # Get the current page number from the request
-    page_obj = paginator.get_page(page_number)
-
-    context = {
-        'applications': applications,
-        'status' : status,
-        'page_obj': page_obj,
-
-    }
-    return render(request, 'applications.html',context=context)
+def wholesale_list(request):
+    wholesale = WholesaleOrderTelegtam.objects.all()
+    return render(request, 'orders.html', {'wholesales': wholesale})
 
 
-def wholesale_orders_view(request):
-    orders = WholesaleOrder.objects.all()
-    status = Status.objects.all()
-    paginator = Paginator(orders, 20)
 
 
-    page_number = request.GET.get('page')  # Get the current page number from the request
-    page_obj = paginator.get_page(page_number)
+class RetailApi(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = RetailOrderSerializer 
+    queryset = RetailOrder.objects.all().order_by('id')
 
 
-    context = {
-        'orders': orders,
-        'status' : status,
-        'page_obj': page_obj
-    }
-    
-    return render(request, 'applications.html',context=context)
-
-def wholesale_view(request):
-    applications = Application.objects.all()
-    status = Status.objects.all()
-    paginator = Paginator(applications, 10)
-    wholesale = Wholesale.objects.all()
-
-    page_number = request.GET.get('page')  # Get the current page number from the request
-    page_obj = paginator.get_page(page_number)
-
-    context = {
-        'applications': applications,
-        'status' : status,
-        'page_obj': page_obj,
-        'wholesale': wholesale
-
-    }
-    return render(request, 'wholesale.html',context=context)
-
+def retail_list(request):
+    orders = RetailOrder.objects.all()
+    return render(request, 'applications.html', {'orders': orders})

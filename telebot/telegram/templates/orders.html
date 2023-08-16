@@ -1,0 +1,25 @@
+{% extends "applications.html" %}
+{% load static %}
+{% include application  %}
+{% block title %}Оптовый заказ{% endblock title %}
+{% block header %}Меню{% endblock header %}
+  
+{% block content %}
+<tbody>
+    {% for wholesale in wholesales %}
+    <tr>
+        <td>{{ wholesale.id }}</td>
+        <td>{{ wholesale.username }}</td>
+        <td>{{ wholesale.quantity }}</td>
+        <td>{{ wholesale.item_sku }}</td>
+        <td>{{ wholesale.item_color }}</td>
+        <td>{{ wholesale.item_size }}</td>
+        <td>{{ wholesale.amount }}</td>
+        <td><img src="{{ wholesale.photowh.url }}" alt="Order Photo" width="100"></td>
+        <td>{{ wholesale.created_at }}</td>
+        <td>{{ wholesale.unique_id }}</td>
+        <td>{{ wholesale.status }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+{% endblock content %}

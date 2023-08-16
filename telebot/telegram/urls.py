@@ -1,9 +1,10 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
-from telegram.views import orders_view
+
 urlpatterns = [
     # other URL patterns
-    path('', views.Core, name='core'),
-    path('wholesale/', orders_view, name='orders'),
-    path('orders/', orders_view, name='orders'),
+    path('application', views.retail_list, name='application'),
+    path('orders/', views.wholesale_list, name='orders'),
+    path('api/wholesale', views.WholesaleApi.as_view()),
+    path('api/retail', views.RetailApi.as_view()),
 ]
