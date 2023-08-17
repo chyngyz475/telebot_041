@@ -49,32 +49,12 @@ class WholesaleOrderTelegtam(models.Model):
         return str(self.username)
     
 
-class Retail(models.Model):
-    class Meta:
-        verbose_name = 'Товар'
-        verbose_name_plural = 'Товары'
-
-    # Existing fields
-    name = models.CharField(max_length=255, verbose_name='Имя пользователя')
-    sku = models.CharField(max_length=255, verbose_name='Артикул товара')
-    color = models.CharField(max_length=255, verbose_name='Цвет товара')
-    size = models.CharField(max_length=255, verbose_name='Размер товара')
-    amount = models.FloatField()
-    status = models.ForeignKey(Status, on_delete=models.CASCADE)
-    photo = models.ImageField(upload_to='photos/', blank=True, null=True)
-
-    # New fields
-    created_date = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
-    unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, verbose_name='Уникальный ID')
-
-    def __str__(self) -> str:
-        return str(self.name)
 
 
 class RetailOrder(models.Model):
     class Meta:
-        verbose_name = 'Товар'
-        verbose_name_plural = 'Товары'
+        verbose_name = 'ТоварРозницу'
+        verbose_name_plural = 'ТоварРозницу'
 
     # Existing fields
     name = models.CharField(max_length=255, verbose_name='Имя пользователя')
@@ -87,7 +67,7 @@ class RetailOrder(models.Model):
 
     # New fields
     created_date = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
-    unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, verbose_name='Уникальный ID')
+    id_wh = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, verbose_name='Уникальный IDwh')
 
     def __str__(self) -> str:
         return str(self.name)

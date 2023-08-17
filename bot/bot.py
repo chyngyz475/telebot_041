@@ -523,29 +523,42 @@ async def handle_delivery(query: types.CallbackQuery):
 
 
 
-# Статус заказа
 @dp.message_handler(state=StatusForm.ID_PRODUCT)
 async def process_product_id(message: types.Message, state: FSMContext):
     product_id = message.text
 
-    try:
-        # Assuming you have different models for Wholesale and Retail orders
-        wholesale_order = WholesaleOrderTelegtam.objects.get(unique_id=product_id)
-        expected_status = wholesale_order.status
-        # You can define your status mapping here
-        status_mapping = {
-            1: 'В ожидании',
-            2: 'В обработке',
-            3: 'Отправлен',
-            4: 'Доставлен',
-        }
-        expected_status_text = status_mapping.get(expected_status, 'Неизвестный статус')
+    # Создание курсора для выполнения SQL-запросов
+    cursor = conn.cursor()
 
-        message_text = f"Статус товара ID: {product_id}\nОжидаемый статус заказа: {expected_status_text}"
-    except WholesaleOrderTelegtam.DoesNotExist:
-        message_text = f"Заказ с ID {product_id} не найден"
+    try:
+        # Выполнение SQL-запроса для получения информации о заказе по ID
+        cursor.execute("SELECT * FROM telegram_wholesaleordertelegtam WHERE unique_id = %s", (product_id,))
+        wholesale_order = cursor.fetchone()
+
+        if wholesale_order:
+            expected_status = wholesale_order[5]  # Предполагая, что статус хранится в шестом столбце
+            # Вы можете определить свои статусы и их текстовые представления
+            status_mapping = {
+                1: 'В ожидании',
+                2: 'В обработке',
+                3: 'Отправлен',
+                4: 'Доставлен',
+            }
+            expected_status_text = status_mapping.get(expected_status, 'Неизвестный статус')
+
+            message_text = f"Статус товара ID: {product_id}\nОжидаемый статус заказа: {expected_status_text}"
+        else:
+            message_text = f"Заказ с ID {product_id} не найден"
+    except Exception as e:
+        message_text = f"Произошла ошибка: {str(e)}"
+
+    # Закрытие курсора
+    cursor.close()
 
     await message.reply(message_text)
+
+# ... Ваш остальной код
+
 
 # Статус заказа
 

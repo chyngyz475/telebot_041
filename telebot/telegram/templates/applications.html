@@ -100,43 +100,9 @@
       </nav>
     <!-- Table -->
     <table id="applicationTable">
-      <thead>
-        <h1>Оптовый заказ</h1>
-        <tr>
-          <th>ID</th>
-          <th>Username</th>
-          <th>Quantity</th>
-          <th>Item SKU</th>
-          <th>Item Color</th>
-          <th>Item Size</th>
-          <th>Amount</th>
-          <th>Photo</th>
-          <th>Created At</th>
-          <th>Unique ID</th>
-          <th>Status</th>
-      </tr>
-      </thead>
-      <tbody>
-        {% for wholesale in wholesales %}
-        <tr>
-            <td>{{ wholesale.id }}</td>
-            <td>{{ wholesale.username }}</td>
-            <td>{{ wholesale.quantity }}</td>
-            <td>{{ wholesale.item_sku }}</td>
-            <td>{{ wholesale.item_color }}</td>
-            <td>{{ wholesale.item_size }}</td>
-            <td>{{ wholesale.amount }}</td>
-            <td><img src="{{ wholesale.photowh.url }}" alt="Order Photo" width="100"></td>
-            <td>{{ wholesale.created_at }}</td>
-            <td>{{ wholesale.unique_id }}</td>
-            <td>{{ wholesale.status }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <table id="applicationTable">
       <h1>Розничный заказ</h1>
       <tr>
+        <th>ID</th>
         <th>ID</th>
         <th>Name</th>
         <th>SKU</th>
@@ -150,12 +116,13 @@
     {% for order in orders %}
     <tr>
         <td>{{ order.id }}</td>
+        <td>{{ order.id_wh }}</td>
         <td>{{ order.name }}</td>
         <td>{{ order.sku }}</td>
         <td>{{ order.color }}</td>
         <td>{{ order.size }}</td>
         <td>{{ order.amount }}</td>
-        <td><img src="{{ order.photo }}" alt="Order Photo" width="100"></td>
+        <td><img src="{{ order.photo.url }}" alt="Order Photo" width="100"></td>
         <td>{{ order.created_date }}</td>
         <td>{{ order.status }}</td>
     </tr>

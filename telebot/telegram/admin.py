@@ -20,5 +20,5 @@ class WholesaleOrderTelegtamAdmin(admin.ModelAdmin):
 admin.site.register(WholesaleOrderTelegtam, WholesaleOrderTelegtamAdmin)
 
 class RetailOrderAdmin(admin.ModelAdmin):
-    list_display = ('name', 'sku', 'color', 'size', 'amount', 'photo', 'status', 'created_date', 'unique_id')
+    list_display = ('name', 'sku', 'color', 'size', 'amount', 'photo', 'status', 'created_date', 'id_wh')
 admin.site.register(RetailOrder, RetailOrderAdmin)
