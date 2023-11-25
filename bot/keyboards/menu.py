@@ -1,6 +1,7 @@
 from aiogram import types
+from aiogram import Router
 
-
+router = Router()
 # Inline keyboard buttons
 menu_buttons = {
     'checkout': '🛒 Оформление заказа',
@@ -12,26 +13,3 @@ menu_buttons = {
     'delivery': '🚚 Доставка',
     'order_history': '📜 История заказов'
 }
-
-
-
-def get_menu_keyboard():
-    keyboard = types.InlineKeyboardMarkup(row_width=1)
-    buttons = [types.InlineKeyboardButton(text=value, callback_data=key) for key, value in menu_buttons.items()]
-    keyboard.add(*buttons)
-    return keyboard
-
-
-def get_back_keyboard():
-    keyboard = types.InlineKeyboardMarkup(row_width=1)
-    back_button = types.InlineKeyboardButton(text='Back', callback_data='back')
-    keyboard.add(back_button)
-    return keyboard
-
-def get_checkout_keyboard():
-    keyboard = types.InlineKeyboardMarkup(row_width=2)
-    retail_button = types.InlineKeyboardButton(text='Розничный', callback_data='checkout_retail')
-    wholesale_button = types.InlineKeyboardButton(text='Оптовая', callback_data='checkout_wholesale')
-    keyboard.add(retail_button, wholesale_button)
-    return keyboard
-

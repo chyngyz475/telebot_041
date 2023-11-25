@@ -40,7 +40,7 @@ class WholesaleOrderTelegtam(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     photowh = models.ImageField(upload_to='photos/', blank=True, null=True)
     status = models.ForeignKey(Status, on_delete=models.CASCADE)
-
+    
     # New fields
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     unique_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, verbose_name='Уникальный ID')
@@ -64,10 +64,19 @@ class RetailOrder(models.Model):
     amount = models.FloatField()
     status = models.ForeignKey(Status, on_delete=models.CASCADE)
     photo = models.ImageField(upload_to='photos/', blank=True, null=True)
-
+    adds = models.TextField(verbose_name='Адрес доставки')
     # New fields
     created_date = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     id_wh = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, verbose_name='Уникальный IDwh')
 
     def __str__(self) -> str:
         return str(self.name)
+    
+
+class UserProfile(models.Model):
+    user_id = models.BigIntegerField(unique=True)
+    phone_number = models.CharField(max_length=15)  # Adjust max_length as needed
+    # Add other fields as needed
+
+    def __str__(self):
+        return f"User {self.user_id}"
